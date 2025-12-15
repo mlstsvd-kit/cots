@@ -65,11 +65,11 @@ DATABASE_URL=postgresql://user:password@db:5432/chronicles_of_awakened_souls
 # JWT секрет
 JWT_SECRET=your-super-secret-jwt-key
 
-# OAuth провайдеры
-YANDEX_CLIENT_ID=ваш-идентификатор-приложения-яндекс
-YANDEX_CLIENT_SECRET=ваш-секрет-приложения-яндекс
-GOOGLE_CLIENT_ID=ваш-идентификатор-приложения-гугл
-GOOGLE_CLIENT_SECRET=ваш-секрет-приложения-гугл
+# OAuth провайдеры (временно отключены для локальной разработки)
+# YANDEX_CLIENT_ID=ваш-идентификатор-приложения-яндекс
+# YANDEX_CLIENT_SECRET=ваш-секрет-приложения-яндекс
+# GOOGLE_CLIENT_ID=ваш-идентификатор-приложения-гугл
+# GOOGLE_CLIENT_SECRET=ваш-секрет-приложения-гугл
 
 # CORS
 CORS_ORIGIN=http://localhost:5173
@@ -92,7 +92,7 @@ openssl rand -base64 32
 ```
 
 #### OAuth провайдеры
-Для получения этих значений нужно зарегистрировать приложения в соответствующих сервисах:
+Для локальной разработки OAuth провайдеры временно отключены. Регистрация и вход осуществляется по email и паролю. Если вы хотите включить OAuth в будущем:
 
 **Для Яндекс:**
 1. Перейдите на https://oauth.yandex.ru/client/new
@@ -123,11 +123,33 @@ openssl rand -base64 32
 docker-compose up -d
 ```
 
-Это запустит все необходимые сервисы:
-- Сервер приложения (порт 3000)
-- Клиент (порт 5173)
-- PostgreSQL база данных (порт 5432)
-- Redis (порт 6379)
+**Если возникает ошибка "client version is too old":**
+
+Обновите Docker CLI до последней версии:
+
+```bash
+# Удаляем старую версию
+sudo apt remove docker-ce-cli
+
+# Устанавливаем актуальную версию Docker CLI
+sudo apt update
+sudo apt install docker-ce-cli
+```
+
+**Если возникает ошибка "not found: pnpm-lock.yaml":**
+
+Убедитесь, что в корне проекта есть файл `pnpm-lock.yaml`. Если его нет, сгенерируйте его:
+
+```bash
+# Установите pnpm глобально
+npm install -g pnpm
+
+# Перейдите в директорию проекта и сгенерируйте lock файл
+cd /path/to/chronicles-of-awakened-souls
+pnpm install
+```
+
+Это создаст файл `pnpm-lock.yaml`, который необходим для сборки Docker-контейнеров.
 
 ### 3. Проверка запуска
 
@@ -140,6 +162,14 @@ docker-compose ps
 Веб-интерфейс будет доступен по адресу: http://localhost:5173
 
 API будет доступно по адресу: http://localhost:3000
+
+### 4. Использование приложения
+
+После запуска приложения:
+1. Перейдите на http://localhost:5173
+2. Используйте форму регистрации для создания аккаунта с email и паролем
+3. После регистрации вы можете войти в систему с этими же данными
+4. OAuth провайдеры (Яндекс и Google) временно отключены для локальной разработки
 
 ## Остановка проекта
 
@@ -177,6 +207,26 @@ pnpm dev
 sudo usermod -aG docker $USER
 
 # Перезапустите сессию или систему
+```
+
+### Если возникает ошибка "client version is too old":
+
+```bash
+# Обновите Docker CLI
+sudo apt remove docker-ce-cli
+sudo apt update
+sudo apt install docker-ce-cli
+```
+
+### Если возникает ошибка "not found: pnpm-lock.yaml":
+
+```bash
+# Установите pnpm глобально
+npm install -g pnpm
+
+# Перейдите в директорию проекта и сгенерируйте lock файл
+cd /path/to/chronicles-of-awakened-souls
+pnpm install
 ```
 
 ### Если приложение не запускается:
