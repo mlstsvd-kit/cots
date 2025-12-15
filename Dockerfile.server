@@ -10,7 +10,7 @@ FROM node:18-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN pnpm build
+RUN npm install -g pnpm && pnpm build
 
 # Продуктивный образ
 FROM node:18-alpine AS runner
@@ -26,6 +26,6 @@ RUN addgroup -g 101 -S nodejs
 RUN adduser -S nextjs -u 1001
 USER nextjs
 
-EXPOSE 300
+EXPOSE 30
 
 CMD ["node", "dist/index.js"]
