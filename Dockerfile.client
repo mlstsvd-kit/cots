@@ -1,0 +1,33 @@
+# Многоступенчатая сборка для оптимизации
+FROM node:18-alpine AS deps
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+COPY package.json pnpm-lock.yaml ./
+RUN npm install -g pnpm && pnpm install --frozen-lockfile
+
+# Копируем зависимости
+FROM node:18-alpine AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+RUN pnpm build:client
+
+# Продуктивный образ
+FROM node:18-alpine AS runner
+WORKDIR /app
+
+# Устанавливаем production зависимости
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=builder /app/packages/client/dist ./dist
+
+# Устанавливаем http-server для раздачи статики
+RUN npm install -g http-server
+
+# Создаем пользователя для безопасности
+RUN addgroup -g 101 -S nodejs
+RUN adduser -S nextjs -u 1001
+USER nextjs
+
+EXPOSE 5173
+
+CMD ["http-server", "dist", "-p", "5173"]

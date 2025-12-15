@@ -1,0 +1,16 @@
+{
+  "name": "@cas/shared",
+  "version": "0.0.1",
+  "description": "Shared types and utilities for Chronicles of Awakened Souls",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}

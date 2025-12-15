@@ -1,0 +1,256 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Player {
+  id            String   @id @default(uuid())
+  username      String   @unique
+  email         String   @unique
+ avatar        String?
+  oauthProvider String?
+  oauthId       String?
+  spiritId      String?
+  
+  // Прогрессия
+  power         Int      @default(0) // Мощь духа
+  harmony       Int      @default(0) // Внутренняя гармония
+  understanding Int      @default(0) // Глубина понимания
+  
+  // Система духов
+  selectedSpiritId String?
+  unlockedSpirits String[] // IDs духов, которые игрок может использовать
+  
+  // Аура
+  auraId        String?
+  auraLevel     Int      @default(0)
+  
+  // Школа
+  schoolId      String?
+  schoolRank    String?  @default("NOVICE")
+  
+  // Прочее
+  createdAt     DateTime @default(now())
+  lastLoginAt   DateTime?
+  isActive      Boolean  @default(true)
+  
+  // Связи
+  techniques    PlayerTechnique[]
+  loadouts      Loadout[]
+  titles        Title[]
+  legends       PlayerLegend[]
+  
+  @@index([power])
+  @@index([createdAt])
+}
+
+model SpiritTemplate {
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  element     String   // Стихия: огонь, вода, земля, воздух, тьма, свет и т.д.
+  character   String   // Характер духа
+  uniqueMechanic String // Уникальная механика духа
+  isActive    Boolean  @default(true)
+  
+  // Рудименты (базовые умения)
+  rudiments    RudimentTemplate[]
+  
+  // Связи
+  players      Player[]
+  
+  @@index([element])
+}
+
+model RudimentTemplate {
+  id           String   @id @default(uuid())
+  name         String
+  description  String
+  baseType     String   // Урон/Контроль/Защита
+  elementType  String   // Стихия
+  isActive     Boolean @default(true)
+  
+  // Связи
+  spiritId     String
+  spirit       SpiritTemplate @relation(fields: [spiritId], references: [id])
+  
+  @@index([elementType])
+}
+
+model PlayerTechnique {
+  id            String   @id @default(uuid())
+  playerId      String
+  player        Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  
+  // Информация о технике
+  name          String
+  description   String
+  rudimentId    String
+  rudiment      RudimentTemplate @relation(fields: [rudimentId], references: [id])
+  fragmentIds   String[] // IDs фрагментов понимания
+ essence       String   // Эссенция (стиль)
+  elementType   String   // Стихия техники
+  
+  // Параметры
+  level         Int      @default(1)
+  isExperimental Boolean @default(false) // Экспериментальная техника?
+  
+  // Статистика
+  uses          Int      @default(0)
+  successRate   Float?   // Для экспериментальных техник
+  
+  createdAt     DateTime @default(now())
+  
+  @@index([playerId])
+  @@index([elementType])
+}
+
+model Loadout {
+  id           String   @id @default(uuid())
+  playerId     String
+  player       Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  
+  name         String   // Название настроя: "Против огня", "Для рейдов", "Контроль"
+  techniqueIds String[] // IDs техник в настрое
+  slotIndex    Int      // Индекс слота (0-5, зависит от гармонии)
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  @@index([playerId, slotIndex])
+}
+
+model Title {
+  id          String   @id @default(uuid())
+  playerId    String
+  player      Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  
+  name        String   // "Повелитель Пламени", "Покоритель Бездн"
+  description String
+  rarity      String   // "COMMON", "RARE", "EPIC", "LEGENDARY"
+  acquiredAt  DateTime @default(now())
+  
+  @@index([rarity])
+}
+
+model PlayerLegend {
+  id          String   @id @default(uuid())
+  playerId    String
+  player      Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  
+  title       String   // Заголовок легенды
+  description String   // Описание подвига
+  eventType   String   // Тип события: "PVP_VICTORY", "BOSS_DEFEAT", "EXPLORATION", etc.
+  powerLevel  Int      // Уровень мощи при создании легенды
+  isEpic      Boolean  @default(false) // Эпическая ли легенда?
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([powerLevel])
+  @@index([isEpic])
+}
+
+model Location {
+  id          String   @id @default(uuid())
+  name        String
+ description String
+  level       Int      // Уровень опасности
+  element     String?  // Преобладающая стихия
+  isActive    Boolean  @default(true)
+  
+  // Связи
+ monsters    MonsterTemplate[]
+  quests      Quest[]
+  
+  @@index([level])
+}
+
+model MonsterTemplate {
+  id           String   @id @default(uuid())
+  name         String
+  description  String
+  element      String   // Стихия монстра
+  basePower    Int      // Базовая сила
+  health       Int
+  abilities    Json?    // Особые способности монстра
+  locationId   String
+ location     Location @relation(fields: [locationId], references: [id])
+  
+  @@index([element])
+  @@index([basePower])
+}
+
+model Quest {
+  id           String   @id @default(uuid())
+  name         String
+ description  String
+ locationId   String
+  location     Location @relation(fields: [locationId], references: [id])
+  
+  // Требования
+  requiredPower Int?
+  requiredLevel Int?
+  
+  // Награды
+ rewardPower   Int      @default(0)
+  rewardFragments Json?  // Награда в виде фрагментов понимания
+  rewardEssences Json?   // Награда виде эссенций
+  
+  isActive     Boolean  @default(true)
+  
+  @@index([requiredPower])
+}
+
+model PvPRating {
+  id           String   @id @default(uuid())
+  playerId     String
+  player       Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  
+ rating       Int      @default(1000) // Рейтинг Эло
+  wins         Int      @default(0)
+  losses       Int      @default(0)
+  winRate      Float?
+  season       String   // Номер сезона
+  
+  @@index([rating])
+  @@index([season])
+}
+
+model PvPChallenge {
+  id           String   @id @default(uuid())
+  challengerId String
+  defenderId   String
+  mode         String   // "1v1", "2v2", "BATTLE_ROYALE"
+  
+  // Статус
+  status       String   @default("PENDING") // PENDING, ACCEPTED, DECLINED, COMPLETED
+ createdAt    DateTime @default(now())
+  acceptedAt   DateTime?
+  
+  // Связи
+  challenger   Player @relation("ChallengeInitiator", fields: [challengerId], references: [id])
+  defender     Player @relation("ChallengeTarget", fields: [defenderId], references: [id])
+  
+  @@index([status])
+  @@index([createdAt])
+}
+
+model BattleLog {
+  id           String   @id @default(uuid())
+  battleType   String   // "PVP", "PVE"
+  participants Json     // Участники боя
+  log          Json     // Лог боя в формате JSON
+  winnerId     String?
+  duration     Int?     // Длительность боя в секундах
+  createdAt    DateTime @default(now())
+  
+  @@index([battleType])
+  @@index([createdAt])
+}

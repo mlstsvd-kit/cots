@@ -1,0 +1,31 @@
+{
+  "name": "chronicles-of-awakened-souls",
+  "version": "0.0.1",
+  "description": "Текстовая MMO 'Хроники Пробуждённых Душ'",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "cd packages/server && npm run dev",
+    "dev:client": "cd packages/client && npm run dev",
+    "build": "npm run build:server && npm run build:client",
+    "build:server": "cd packages/server && npm run build",
+    "build:client": "cd packages/client && npm run build",
+    "start": "node packages/server/dist/index.js",
+    "db:push": "cd packages/server && npx prisma db push",
+    "db:migrate": "cd packages/server && npx prisma migrate dev",
+    "db:studio": "cd packages/server && npx prisma studio"
+  },
+  "keywords": [
+    "mmo",
+    "fantasy",
+    "rpg",
+    "svelte",
+    "fastify",
+    "typescript"
+  ],
+ "author": "Vibecode",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  },
+  "dependencies": {}
+}
